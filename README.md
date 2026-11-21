@@ -16,7 +16,7 @@
 | 화면 | 돕는 일 |
 | --- | --- |
 | **검색 목록 비교 패널** | 지도 왼쪽 검색 목록(광고 행 포함) 옆 `가격 비교` 버튼을 누르면 외부 탭으로 나가지 않고 지도 안에서 플랫폼별 최저가순 가격, 시술 탭 필터, 부가세 포함 토글을 보여줍니다 |
-| **병원 상세·사진 탭 카드** | 병원 상세(`/home`)나 사진(`/photo`) 탭을 열면 수집된 전체 플랫폼 가격표를 최저가 오름차순으로 상단에 띄웁니다 |
+| **병원 상세 및 사진 탭 카드** | 병원 상세(`/home`)나 사진(`/photo`) 탭을 열면 수집된 전체 플랫폼 가격표를 최저가 오름차순으로 상단에 띄웁니다 |
 | **툴바 팝업** | 확장 프로그램 사용 여부를 켜고 끄며 최근 확인한 병원 최대 20건의 최저가 플랫폼 요약과 네이버 지도 빠른 검색을 엽니다 |
 | **안내 웹 및 부가세 계산기** | 실제 작동 화면과 지원 진료과 안내(`/`), 참고용 부가세 10% 계산기(`/vat`), 개인정보처리방침(`/privacy`)을 확인하고 체험 패키지 ZIP을 내려받습니다 |
 
@@ -31,12 +31,12 @@
 
 ```mermaid
 flowchart LR
-    List["#searchIframe\n병원 목록 (초기 외부 요청 0건)"] -->|"REGISTER_SEARCH_REGION_HINTS\n(최대 300건 FIFO)"| SW["Background Service Worker\ninFlight 병합 · 병렬 수집 · 24h/30m 캐시"]
-    List -->|"가격 비교 클릭 -> 지도 내 비교 창"| SW
-    Entry["#entryIframe\n병원 상세 · /photo 서브탭"] -->|"FETCH_HOSPITAL_COMPARISON"| SW
-    SW -->|"Promise.allSettled (5s 타임아웃)"| Platforms["모두닥(신고 정가 포함) · 강남언니\n여신티켓 · 바비톡 실시간 파싱"]
+    List["#searchIframe\n병원 목록 (초기 외부 요청 0건)"] -->|"REGISTER_SEARCH_REGION_HINTS\n(최대 300건 FIFO)"| SW["Background Service Worker\ninFlight 병합, 병렬 수집, 24h/30m 캐시"]
+    List -->|"가격 비교 클릭, 지도 내 비교 창"| SW
+    Entry["#entryIframe\n병원 상세, /photo 서브탭"] -->|"FETCH_HOSPITAL_COMPARISON"| SW
+    SW -->|"Promise.allSettled (5s 타임아웃)"| Platforms["모두닥(신고 정가 포함), 강남언니\n여신티켓, 바비톡 실시간 파싱"]
     Platforms -->|"rankOffersByEffectivePrice"| Sort["부가세 10% 포함 최저가순 정렬"]
-    Web["apps/web 정적 번들\nCloudflare Workers (.cf-dist)"] -->|"정적 HTML 서빙 · /intro -> / 301"| Landing["/ · /vat · /privacy\n안내 웹 · VAT 계산기 · ZIP 배포"]
+    Web["apps/web 정적 번들\nCloudflare Workers (.cf-dist)"] -->|"정적 HTML 서빙, /intro 301 리다이렉트"| Landing["/, /vat, /privacy\n안내 웹, VAT 계산기, ZIP 배포"]
 ```
 
 ### 1. 별도 서버 없이 4개 플랫폼 가격을 동시에 모으는 방식
@@ -66,11 +66,11 @@ Content Script, 팝업, 서비스 워커가 동시에 `chrome.storage.local`을 
 
 ```text
 medi-bridge/
-├── .github/workflows/ci.yml   PR·main 푸시 정적 검사, 빌드, 권한 검사, E2E 워크플로
+├── .github/workflows/ci.yml   PR과 main 푸시 정적 검사, 빌드, 권한 검사, E2E 워크플로
 ├── apps/extension/            WXT Chrome MV3 확장 (Content Script, Background SW, Popup, E2E)
 ├── apps/web/                  정적 안내 웹, 부가세 계산기, 개인정보처리방침, Cloudflare Worker
-├── packages/shared/           상호명·지역 매칭, 부가세 10% 정렬·포맷, 플랫폼 URL 빌더
-├── packages/parsers/          모두닥·강남언니·여신티켓·바비톡 파서 및 오프라인 픽스처 테스트
+├── packages/shared/           상호명과 지역 매칭, 부가세 10% 정렬과 포맷, 플랫폼 URL 빌더
+├── packages/parsers/          모두닥, 강남언니, 여신티켓, 바비톡 파서 및 오프라인 픽스처 테스트
 ├── packages/ui/               공용 색상 토큰 및 SVG 아이콘
 └── assets/                    네이버 지도 실제 적용 캡처 이미지
 ```
@@ -89,11 +89,11 @@ Chrome에서 로컬 확장 프로그램을 불러와 확인하는 순서입니�
 
 1. 주소창에 `chrome://extensions`를 입력하고 우측 상단 **개발자 모드**를 켭니다.
 2. **압축해제된 확장 프로그램을 로드합니다**를 눌러 `apps/extension/output/chrome-mv3` 폴더를 선택합니다.
-3. [네이버 지도](https://map.naver.com)에서 치과, 안과, 피부과, 성형외과, 정형외과 병원을 검색해 목록 옆 `가격 비교` 버튼과 상세·사진 탭 카드를 확인합니다.
+3. [네이버 지도](https://map.naver.com)에서 치과, 안과, 피부과, 성형외과, 정형외과 병원을 검색해 목록 옆 `가격 비교` 버튼과 상세 및 사진 탭 카드를 확인합니다.
 
 | 명령 | 설명 |
 | --- | --- |
-| `pnpm verify` | 5개 워크스페이스 타입 체크, Biome 린트·포맷 검사, Vitest 단위 테스트 실행 |
+| `pnpm verify` | 5개 워크스페이스 타입 체크, Biome 린트와 포맷 검사, Vitest 단위 테스트 실행 |
 | `pnpm build` | 확장(`output/chrome-mv3`)과 Next.js 안내 웹 전체 빌드 |
 | `pnpm zip:ext` | Chrome Web Store 및 안내 웹 배포용 ZIP 패키지(`apps/extension/output/`) 생성 |
 | `pnpm test:e2e` | 빌드된 Chrome MV3 확장(지도 내 비교 패널, 다중 플랫폼 최저가 정렬, `/photo` 릴레이 포함)과 정적 웹 Playwright E2E 실행 |
@@ -103,6 +103,6 @@ CI 파이프라인([`.github/workflows/ci.yml`](.github/workflows/ci.yml))은 �
 
 ## 범위와 한계
 
-- **굿닥과 `/photo` 직접 진입 범위**: 굿닥 상세 페이지 비급여 표는 클라이언트 렌더링 구조라 직접 파싱하지 않고 진료과에 맞는 병원 검색 링크(`goodoc.co.kr/hospitals?keyword=`)로 연결합니다. 검색 목록을 거치지 않고 `/hospital/<id>/photo` 주소로 바로 들어가면 중계된 지역 힌트가 없어 90점 이상 완전·정규 일치 상호만 매칭합니다.
-- **외부 사이트 구조 의존성**: 네이버 지도의 난독화 CSS 클래스나 각 플랫폼 공개 SSR/API 응답 필드가 바뀌면 [naverEntryDom.ts](apps/extension/src/adapters/naverEntryDom.ts), [naverSearchListDom.ts](apps/extension/src/adapters/naverSearchListDom.ts), [packages/parsers](packages/parsers/src/index.ts)의 셀렉터와 파서를 함께 갱신해야 합니다.
+- **굿닥과 `/photo` 직접 진입 범위**: 굿닥 상세 페이지 비급여 표는 클라이언트 렌더링 구조라 직접 파싱하지 않고 진료과에 맞는 병원 검색 링크(`goodoc.co.kr/hospitals?keyword=`)로 연결합니다. 검색 목록을 거치지 않고 `/hospital/<id>/photo` 주소로 바로 들어가면 중계된 지역 힌트가 없어 90점 이상 완전 또는 정규 일치 상호만 매칭합니다.
+- **외부 사이트 구조 의존성**: 네이버 지도의 난독화 CSS 클래스나 각 플랫폼 공개 페이지 초기 데이터(`__NEXT_DATA__`) 및 API 응답 필드가 바뀌면 [naverEntryDom.ts](apps/extension/src/adapters/naverEntryDom.ts), [naverSearchListDom.ts](apps/extension/src/adapters/naverSearchListDom.ts), [packages/parsers](packages/parsers/src/index.ts)의 셀렉터와 파서를 함께 갱신해야 합니다.
 - **스토어 심사 진행 상태**: Chrome Web Store 등록 심사 전에는 안내 웹(`/`)과 GitHub 저장소에서 체험용 ZIP 파일을 내려받아 개발자 모드로 로드해 사용합니다.
